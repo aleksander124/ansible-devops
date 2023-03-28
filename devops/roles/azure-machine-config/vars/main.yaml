@@ -1,0 +1,18 @@
+required_packages:
+  - unzip
+  - yum-utils
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - java-11-openjdk
+  - nodejs
+  - git
+  - curl
+  - make
+  - krb5-libs
+  - libicu
+  - openssl-libs
+  - zlib
+  - dotnet-sdk-7.0
+  - openssl
+kubectl_version: 1.22.2

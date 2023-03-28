@@ -1,0 +1,68 @@
+  - name: Create tfsagent user if it doesn't exist
+    user:
+      name: tfsagent
+      state: present
+
+  - name: Add necessary repositories
+    yum_repository:
+      name: packages-microsoft-com-prod
+      description: Microsoft packages for Enterprise Linux 7 - $basearch
+      baseurl: https://packages.microsoft.com/rhel/7/prod/
+      gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+      enabled: yes
+      state: present
+
+  - name: Add Docker repository
+    yum_repository:
+      name: docker-ce-stable
+      description: Docker CE Stable - $basearch
+      baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+      gpgcheck: yes
+      gpgkey: https://download.docker.com/linux/centos/gpg
+      enabled: yes
+      state: present
+
+  - name: Install required packages
+    become: true
+    yum:
+      name: "{{ required_packages }}"
+      state: present
+    when: ansible_distribution_major_version == '9'
+
+  - name: Install Docker Compose
+    get_url:
+      url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+      dest: /usr/local/bin/docker-compose
+      mode: 'a+x'
+
+  - name: Install Helm
+    get_url:
+      url: https://get.helm.sh/helm-v3.7.0-linux-amd64.tar.gz
+      dest: /tmp/helm.tar.gz
+    when: ansible_distribution_major_version == '9'
+
+  - name: Extract Helm
+    unarchive:
+      src: /tmp/helm.tar.gz
+      dest: /usr/local/bin
+      copy: no
+      creates: /usr/local/bin/helm
+      extra_opts: --strip-components=1
+    when: ansible_distribution_major_version == '9'
+  
+  - name: Download and install kubectl in defined version
+    become: true
+    get_url:
+      url: https://storage.googleapis.com/kubernetes-release/release/v{{ kubectl_version }}/bin/linux/amd64/kubectl
+      dest: /usr/local/bin/kubectl
+      mode: 'a+x'
+  
+  - name: Start Docker service
+    systemd:
+      name: docker
+      state: started
+      enabled: true
+  
+  - name: Run dnf update
+    become: true
+    command: dnf clean all
