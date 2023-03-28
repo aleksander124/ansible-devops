@@ -1,0 +1,65 @@
+  - name: Create agent directory
+    file:
+      path: "{{ item.dir }}"
+      state: directory
+      recurse: yes
+      owner: "{{ user }}"
+      group: "{{ user }}"
+    loop: "{{ azure_agent }}"
+
+  - name: Download agent installation script
+    get_url:
+      url: "https://vstsagentpackage.azureedge.net/agent/{{ item.version }}/vsts-agent-linux-x64-{{ item.version }}.tar.gz"
+      dest: "{{ item.dir }}/vsts-agent-linux-x64-{{ item.version }}.tar.gz"
+    loop: "{{ azure_agent }}"
+
+  - name: Extract agent installation script
+    become_user: "{{ user }}"
+    command: tar xvzf "{{ item.dir }}/vsts-agent-linux-x64-{{ item.version }}.tar.gz" -C "{{ item.dir }}/"
+    loop: "{{ azure_agent }}"
+  
+  - name: Delete tar.gz from directory
+    file:
+      state: absent
+      path: "{{ item.dir }}/vsts-agent-linux-x64-{{ item.version }}.tar.gz"
+    loop: "{{ azure_agent }}"
+
+  - name: Install dependencies
+    become: true
+    command: "sh {{ item.dir }}/bin/installdependencies.sh"
+    loop: "{{ azure_agent }}"
+
+  - name: Configure agent
+    command: "sh {{ item.dir }}/config.sh --unattended --agent {{ item.name }} --url https://dev.azure.com/{{ item.org }} --auth pat --token {{ repo_pat }} --pool '{{ item.pool }}' --work _work --replace --acceptTeeEula"
+    become_user: "{{ user }}"
+    loop: "{{ azure_agent }}"
+
+  - name: Create systemd service for Azure agent
+    become_user: root
+    command: "sh svc.sh install {{ user }}"
+    args: 
+      chdir: "{{ item.dir }}"
+    become: true
+    loop: "{{ azure_agent }}"
+
+  - name: Create env variables for Azure agent
+    become_user: "{{ user }}"
+    command: "sh env.sh"
+    args: 
+      chdir: "{{ item.dir }}"
+    loop: "{{ azure_agent }}"
+
+  # - name: Rename Azure agent service file
+  #   command: mv "/etc/systemd/system/vsts.agent.{{ item.org }}.{{ item.service_name }}.{{ item.name }}.service" "/etc/systemd/system/{{ item.name }}-{{ item.org }}.service"
+  #   become: true
+  #   loop: "{{ azure_agent }}"
+
+  - name: Reload systemd configuration
+    systemd:
+      daemon_reload: yes
+
+  - name: Start Azure agent service
+    command: "sh svc.sh start"
+    args: 
+      chdir: "{{ item.dir }}"
+    loop: "{{ azure_agent }}"

@@ -1,0 +1,7 @@
+user: tfsagent
+azure_agent:
+  - name: <agent name>         # mgeupdc01-bld02-1
+    dir: <dir path>            # /opt/azure-agent-1
+    version: <version>         #3.217.1
+    org: "<ado organization name>"
+    pool: "<pool name>"
