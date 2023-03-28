@@ -1,0 +1,4 @@
+- hosts: azure
+  become: true
+  roles:
+  - azure-agent-add
