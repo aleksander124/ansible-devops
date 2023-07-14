@@ -1,0 +1,24 @@
+---
+  - name: Initila Playbook
+    hosts: localhost
+    connection: local
+    gather_facts: no
+    vars:
+      netbox_url: https://netbox-test.medicover.com
+      netbox_token: 9876b0543faff8e63ee747b5788a1f92d44a2e34
+    tasks:
+      - name: Get Devices
+        uri:
+          url: "{{ netbox_url }}/api/dcim/devices"
+          method: GET
+          headers:
+            Authorization: "Token {{ netbox_token}}"
+            Accept: "application/json"
+          return_content: yes
+          body_format: json
+          status_code: [200, 201]
+          validate_certs: false
+        register: netbox_devices
+        run_once: yes
+      - debug:
+          var: netbox_devices

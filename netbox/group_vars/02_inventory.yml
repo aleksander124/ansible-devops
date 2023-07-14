@@ -1,0 +1,8 @@
+---
+plugin: netbox.netbox.nb_inventory
+api_endpoint: https://netbox-test.medicover.com
+token: 9876b0543faff8e63ee747b5788a1f92d44a2e34
+validate_certs: false
+group_by:
+  - device_roles
+  - manufacturers
